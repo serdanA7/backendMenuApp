@@ -16,6 +16,16 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/v1', routes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'API is healthy!' });
+});
+
+// Friendly root route
+app.get('/', (req, res) => {
+  res.send('API is running! 🚀');
+});
+
 // Error handling
 app.use(errorHandler);
 

@@ -15,7 +15,7 @@ async function seedLarge() {
 
   // Generate 10,000 users (with real bcrypt hashes for all)
   console.log('Generating users...');
-  const NUM_USERS = 10000;
+  const NUM_USERS = 10000; 
   const users = [];
   for (let i = 0; i < NUM_USERS; i++) {
     users.push({
