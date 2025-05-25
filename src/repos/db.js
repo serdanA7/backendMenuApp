@@ -1,3 +1,4 @@
+require('dotenv').config(); // FIRST!
 const { Sequelize } = require('sequelize');
 const path = require('path');
 

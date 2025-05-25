@@ -1,3 +1,4 @@
+require('dotenv').config(); // FIRST!
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../repos/db');
 const bcrypt = require('bcryptjs');

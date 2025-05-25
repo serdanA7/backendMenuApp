@@ -1,7 +1,13 @@
+
+require('dotenv').config()
 require('../models');
+
 const bcrypt = require('bcryptjs');
 const { sequelize } = require('../repos/db');
 const { User, MenuItem, Ingredient, MenuItemIngredient } = require('../models');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Seeding DB at host:', process.env.DB_HOST);
+
 
 async function seed() {
   await sequelize.sync({ force: true }); // Drops and recreates tables
