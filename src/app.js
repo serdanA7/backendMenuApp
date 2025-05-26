@@ -11,10 +11,12 @@ app.options('*', cors()); // Enable preflight for all routes
 // Middleware
 app.use(cors({
   origin: [
-    'https://frontendmenuapp.onrender.com', // your deployed frontend
-    'http://localhost:3000' // keep for local dev
+    'https://frontendmenuapp.onrender.com',
+    'http://localhost:3000'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
