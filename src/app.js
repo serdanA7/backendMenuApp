@@ -5,6 +5,9 @@ const routes = require('./routes');
 
 const app = express();
 
+
+app.options('*', cors()); // Enable preflight for all routes
+
 // Middleware
 app.use(cors({
   origin: [
