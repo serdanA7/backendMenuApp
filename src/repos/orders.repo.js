@@ -72,20 +72,31 @@ const repeatOrder = async (userId, orderId) => {
   // Find or create a new cart order
   let cartOrder = await Order.findOne({ where: { user_id: userId, status: 'cart' } });
   if (!cartOrder) {
-    cartOrder = await Order.create({ user_id: userId, total_amount: prevOrder.total_amount, status: 'cart' });
+    cartOrder = await Order.create({ user_id: userId, total_amount: 0, status: 'cart' });
   }
   // Remove existing items in cart
   await OrderItem.destroy({ where: { order_id: cartOrder.id } });
   // Copy items
   for (const item of prevOrder.OrderItems) {
+    // Fetch the current price of the menu item
+    const currentMenuItem = await MenuItem.findByPk(item.menu_item_id);
+    if (!currentMenuItem) {
+      console.error(`Menu item with ID ${item.menu_item_id} not found when repeating order.`);
+      continue; // Skip this item if menu item not found
+    }
     await OrderItem.create({
       order_id: cartOrder.id,
       menu_item_id: item.menu_item_id,
       quantity: item.quantity,
-      price_at_time: item.price_at_time
+      price_at_time: currentMenuItem.price // Use the current price
     });
   }
-  return cartOrder;
+  // Recalculate total amount for the new cart order (optional but good practice)
+  const updatedCartItems = await OrderItem.findAll({ where: { order_id: cartOrder.id } });
+  const newTotalAmount = updatedCartItems.reduce((sum, item) => sum + (item.price_at_time * item.quantity), 0);
+  await cartOrder.update({ total_amount: newTotalAmount });
+
+  return getActiveOrder(userId);
 };
 
 const addToCart = async (userId, menu_item_id, quantity, ingredients) => {
@@ -94,12 +105,23 @@ const addToCart = async (userId, menu_item_id, quantity, ingredients) => {
   if (!order) {
     order = await Order.create({ user_id: userId, total_amount: 0, status: 'cart' });
   }
+  // Find the menu item to get its price
+  const menuItem = await MenuItem.findByPk(menu_item_id);
+  if (!menuItem) {
+    throw new Error(`Menu item with ID ${menu_item_id} not found.`);
+  }
+
   // Find or create the order item
   let orderItem = await OrderItem.findOne({ where: { order_id: order.id, menu_item_id } });
   if (orderItem) {
     await orderItem.update({ quantity });
   } else {
-    orderItem = await OrderItem.create({ order_id: order.id, menu_item_id, quantity, price_at_time: 0 });
+    orderItem = await OrderItem.create({ 
+      order_id: order.id, 
+      menu_item_id, 
+      quantity, 
+      price_at_time: menuItem.price // Use the actual price
+    });
   }
   // Remove old custom ingredients
   await CustomOrderIngredient.destroy({ where: { order_item_id: orderItem.id } });
@@ -109,6 +131,11 @@ const addToCart = async (userId, menu_item_id, quantity, ingredients) => {
       await CustomOrderIngredient.create({ order_item_id: orderItem.id, ingredient_name: ing, action: 'add' });
     }
   }
+  // Recalculate total amount for the cart order (optional but good practice)
+  const updatedCartItems = await OrderItem.findAll({ where: { order_id: order.id } });
+  const newTotalAmount = updatedCartItems.reduce((sum, item) => sum + (Number(item.price_at_time) * item.quantity), 0);
+  await order.update({ total_amount: newTotalAmount });
+
   return getActiveOrder(userId);
 };
 
